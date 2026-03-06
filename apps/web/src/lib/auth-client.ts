@@ -6,10 +6,12 @@ export const authClient = createAuthClient({
 });
 
 export const signInWithGoogle = async () => {
+	const origin = window.location.origin;
+
 	return authClient.signIn.social({
 		provider: "google",
-		callbackURL: "/",
-		errorCallbackURL: "/error",
-		newUserCallbackURL: "/welcome",
+		callbackURL: `${origin}/`,
+		errorCallbackURL: `${origin}/auth/denied`,
+		newUserCallbackURL: `${origin}/`,
 	});
 };

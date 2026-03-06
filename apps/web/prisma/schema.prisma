@@ -13,16 +13,26 @@ datasource db {
   provider = "postgresql"
 }
 
+enum SiteAccessStatus {
+  PENDING
+  ALLOWED
+  REVOKED
+}
+
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+  id                  String            @id
+  name                String
+  email               String
+  emailVerified       Boolean           @default(false)
+  image               String?
+  siteAccessStatus    SiteAccessStatus  @default(PENDING)
+  siteAccessGrantedAt DateTime?
+  siteAccessRevokedAt DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  sessions            Session[]
+  accounts            Account[]
+  siteAccessGrant     SiteAccessGrant?
 
   @@unique([email])
   @@map("user")
@@ -74,4 +84,17 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model SiteAccessGrant {
+  normalizedEmail String   @id
+  userId          String?  @unique
+  grantedAt       DateTime @default(now())
+  revokedAt       DateTime?
+  note            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("site_access_grant")
 }

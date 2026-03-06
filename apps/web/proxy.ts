@@ -2,13 +2,19 @@ import { getCookieCache } from "better-auth/cookies";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function proxy(request: NextRequest) {
+	const pathname = request.nextUrl.pathname;
+
+	if (pathname.startsWith("/auth") || pathname.startsWith("/api/auth")) {
+		return NextResponse.next();
+	}
+
 	const session = await getCookieCache(request);
 
 	// THIS IS NOT SECURE!
 	// This is the recommended approach to optimistically redirect users
 	// better-auth recommends handling auth checks in each page/route
 	if (!session) {
-		return NextResponse.redirect(new URL("/", request.url));
+		return NextResponse.redirect(new URL("/auth/login", request.url));
 	}
 
 	return NextResponse.next();
