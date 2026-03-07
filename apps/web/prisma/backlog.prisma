@@ -136,6 +136,7 @@ model IssueOverride {
   targetDate     DateTime?            @map("target_date") @db.Date
   priority       Int?
   updatedById    String               @map("updated_by_id")
+  createdAt      DateTime             @default(now()) @map("created_at")
   updatedAt      DateTime             @updatedAt @map("updated_at")
   issue          Issue                @relation(fields: [issueId], references: [id], onDelete: Cascade)
   updatedBy      User                 @relation("IssueOverrideUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)

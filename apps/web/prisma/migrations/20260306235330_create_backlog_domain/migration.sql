@@ -91,6 +91,7 @@ CREATE TABLE "issue_overrides" (
     "target_date" DATE,
     "priority" INTEGER,
     "updated_by_id" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "issue_overrides_pkey" PRIMARY KEY ("issue_id")
 );
