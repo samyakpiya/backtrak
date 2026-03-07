@@ -83,6 +83,7 @@ model Issue {
   statusEvents    IssueStatusEvent[]
 
   @@unique([projectId, gitlabIssueId])
+  @@unique([projectId, iid])
   @@index([state, updatedAtGitlab(sort: Desc)])
   @@index([projectId, state])
   @@index([closedAtGitlab])

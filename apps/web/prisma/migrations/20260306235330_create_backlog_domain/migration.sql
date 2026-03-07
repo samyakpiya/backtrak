@@ -153,6 +153,9 @@ CREATE INDEX "issues_project_id_updated_at_gitlab_idx" ON "issues" ("project_id"
 CREATE UNIQUE INDEX "issues_project_id_gitlab_issue_id_key" ON "issues" ("project_id", "gitlab_issue_id");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "issues_project_id_iid_key" ON "issues" ("project_id", "iid");
+
+-- CreateIndex
 CREATE INDEX "labels_title_idx" ON "labels" ("title");
 
 -- CreateIndex
