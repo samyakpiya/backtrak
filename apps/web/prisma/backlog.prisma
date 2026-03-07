@@ -1,0 +1,183 @@
+enum IssueState {
+  OPENED
+  CLOSED
+}
+
+enum IssueInternalStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  BLOCKED
+}
+
+enum IssueStatusEventSource {
+  WEBHOOK
+  POLL
+  MANUAL
+}
+
+enum SyncRunMode {
+  BOOTSTRAP
+  POLL
+  RECONCILE
+  WEBHOOK
+}
+
+enum SyncRunStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+model Project {
+  id                String      @id @default(uuid()) @db.Uuid
+  gitlabProjectId   BigInt      @unique @map("gitlab_project_id")
+  name              String
+  pathWithNamespace String      @map("path_with_namespace")
+  webUrl            String      @map("web_url")
+  active            Boolean     @default(true)
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+  issues            Issue[]
+  labels            Label[]
+  syncCursor        SyncCursor?
+  syncRuns          SyncRun[]
+
+  @@map("projects")
+}
+
+model GitlabUser {
+  id               String          @id @default(uuid()) @db.Uuid
+  gitlabUserId     BigInt          @unique @map("gitlab_user_id")
+  username         String
+  name             String
+  email            String?
+  avatarUrl        String?         @map("avatar_url")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+  authoredIssues   Issue[]         @relation("IssueAuthor")
+  issueAssignments IssueAssignee[]
+
+  @@map("gitlab_users")
+}
+
+model Issue {
+  id              String             @id @default(uuid()) @db.Uuid
+  projectId       String             @map("project_id") @db.Uuid
+  gitlabIssueId   BigInt             @map("gitlab_issue_id")
+  iid             Int
+  title           String
+  description     String?
+  state           IssueState
+  createdAtGitlab DateTime           @map("created_at_gitlab")
+  updatedAtGitlab DateTime           @map("updated_at_gitlab")
+  closedAtGitlab  DateTime?          @map("closed_at_gitlab")
+  dueDate         DateTime?          @map("due_date") @db.Date
+  authorId        String?            @map("author_id") @db.Uuid
+  webUrl          String             @map("web_url")
+  syncedAt        DateTime           @default(now()) @map("synced_at")
+  project         Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author          GitlabUser?        @relation("IssueAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  assignees       IssueAssignee[]
+  labels          IssueLabel[]
+  override        IssueOverride?
+  statusEvents    IssueStatusEvent[]
+
+  @@unique([projectId, gitlabIssueId])
+  @@index([state, updatedAtGitlab(sort: Desc)])
+  @@index([projectId, state])
+  @@index([closedAtGitlab])
+  @@index([dueDate])
+  @@index([projectId, updatedAtGitlab(sort: Desc)])
+  @@map("issues")
+}
+
+model Label {
+  id        String       @id @default(uuid()) @db.Uuid
+  projectId String       @map("project_id") @db.Uuid
+  title     String
+  color     String
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issues    IssueLabel[]
+
+  @@unique([projectId, title])
+  @@index([title])
+  @@map("labels")
+}
+
+model IssueAssignee {
+  issueId String     @map("issue_id") @db.Uuid
+  userId  String     @map("user_id") @db.Uuid
+  issue   Issue      @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user    GitlabUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([issueId, userId])
+  @@index([userId, issueId])
+  @@map("issue_assignees")
+}
+
+model IssueLabel {
+  issueId String @map("issue_id") @db.Uuid
+  labelId String @map("label_id") @db.Uuid
+  issue   Issue  @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([issueId, labelId])
+  @@index([labelId, issueId])
+  @@map("issue_labels")
+}
+
+model IssueOverride {
+  issueId        String               @id @map("issue_id") @db.Uuid
+  internalStatus IssueInternalStatus? @map("internal_status")
+  internalNotes  String?              @map("internal_notes")
+  targetDate     DateTime?            @map("target_date") @db.Date
+  priority       Int?
+  updatedById    String               @map("updated_by_id")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  issue          Issue                @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  updatedBy      User                 @relation("IssueOverrideUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+
+  @@index([updatedById])
+  @@map("issue_overrides")
+}
+
+model IssueStatusEvent {
+  id         String                 @id @default(uuid()) @db.Uuid
+  issueId    String                 @map("issue_id") @db.Uuid
+  fromStatus String?                @map("from_status")
+  toStatus   String                 @map("to_status")
+  changedAt  DateTime               @default(now()) @map("changed_at")
+  source     IssueStatusEventSource
+  issue      Issue                  @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([issueId, changedAt(sort: Desc)])
+  @@map("issue_status_events")
+}
+
+model SyncCursor {
+  projectId         String    @id @map("project_id") @db.Uuid
+  lastSeenUpdatedAt DateTime? @map("last_seen_updated_at")
+  lastSuccessAt     DateTime? @map("last_success_at")
+  lastError         String?   @map("last_error")
+  project           Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("sync_cursors")
+}
+
+model SyncRun {
+  id              String        @id @default(uuid()) @db.Uuid
+  mode            SyncRunMode
+  status          SyncRunStatus @default(RUNNING)
+  projectId       String?       @map("project_id") @db.Uuid
+  startedAt       DateTime      @default(now()) @map("started_at")
+  finishedAt      DateTime?     @map("finished_at")
+  recordsUpserted Int           @default(0) @map("records_upserted")
+  errorMessage    String?       @map("error_message")
+  project         Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, startedAt(sort: Desc)])
+  @@index([status, startedAt(sort: Desc)])
+  @@map("sync_runs")
+}
