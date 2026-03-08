@@ -100,8 +100,8 @@ CREATE TABLE "issue_overrides" (
 CREATE TABLE "issue_status_events" (
     "id" UUID NOT NULL,
     "issue_id" UUID NOT NULL,
-    "from_status" TEXT,
-    "to_status" TEXT NOT NULL,
+    "from_status" "IssueState",
+    "to_status" "IssueState" NOT NULL,
     "changed_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "source" "IssueStatusEventSource" NOT NULL,
     CONSTRAINT "issue_status_events_pkey" PRIMARY KEY ("id")

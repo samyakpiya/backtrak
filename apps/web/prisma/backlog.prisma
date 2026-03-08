@@ -148,8 +148,8 @@ model IssueOverride {
 model IssueStatusEvent {
   id         String                 @id @default(uuid()) @db.Uuid
   issueId    String                 @map("issue_id") @db.Uuid
-  fromStatus String?                @map("from_status")
-  toStatus   String                 @map("to_status")
+  fromStatus IssueState?            @map("from_status")
+  toStatus   IssueState             @map("to_status")
   changedAt  DateTime               @default(now()) @map("changed_at")
   source     IssueStatusEventSource
   issue      Issue                  @relation(fields: [issueId], references: [id], onDelete: Cascade)
