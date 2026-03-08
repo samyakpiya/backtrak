@@ -54,7 +54,7 @@ CREATE TABLE "issues" (
     "due_date" DATE,
     "author_id" UUID,
     "web_url" TEXT NOT NULL,
-    "synced_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "synced_at" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "issues_pkey" PRIMARY KEY ("id")
 );
 
