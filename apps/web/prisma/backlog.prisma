@@ -93,15 +93,17 @@ model Issue {
 }
 
 model Label {
-  id        String       @id @default(uuid()) @db.Uuid
-  projectId String       @map("project_id") @db.Uuid
-  title     String
-  color     String
-  createdAt DateTime     @default(now()) @map("created_at")
-  updatedAt DateTime     @updatedAt @map("updated_at")
-  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  issues    IssueLabel[]
+  id            String       @id @default(uuid()) @db.Uuid
+  projectId     String       @map("project_id") @db.Uuid
+  gitlabLabelId BigInt       @map("gitlab_label_id")
+  title         String
+  color         String
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issues        IssueLabel[]
 
+  @@unique([projectId, gitlabLabelId])
   @@unique([projectId, title])
   @@index([title])
   @@map("labels")

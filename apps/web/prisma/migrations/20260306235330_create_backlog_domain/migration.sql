@@ -62,6 +62,7 @@ CREATE TABLE "issues" (
 CREATE TABLE "labels" (
     "id" UUID NOT NULL,
     "project_id" UUID NOT NULL,
+    "gitlab_label_id" BIGINT NOT NULL,
     "title" TEXT NOT NULL,
     "color" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -158,6 +159,9 @@ CREATE UNIQUE INDEX "issues_project_id_iid_key" ON "issues" ("project_id", "iid"
 
 -- CreateIndex
 CREATE INDEX "labels_title_idx" ON "labels" ("title");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "labels_project_id_gitlab_label_id_key" ON "labels" ("project_id", "gitlab_label_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "labels_project_id_title_key" ON "labels" ("project_id", "title");
